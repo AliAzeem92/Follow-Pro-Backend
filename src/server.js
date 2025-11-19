@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
+const prisma = require('./config/database');
 
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
@@ -32,12 +33,23 @@ app.use("/api/admin/skills", skillRoutes);
 app.use("/api/admin/categories", categoryRoutes);
 
 // Health check
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "OK",
-    timestamp: new Date().toISOString(),
-    massage: "Server is running healthy",
-  });
+app.get("/api/health", async (req, res) => {
+  try {
+    await prisma.$connect();
+    res.json({
+      status: "OK",
+      timestamp: new Date().toISOString(),
+      message: "Server is running healthy",
+      database: "Connected"
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "ERROR",
+      timestamp: new Date().toISOString(),
+      message: "Database connection failed",
+      error: error.message
+    });
+  }
 });
 
 // Error handling
