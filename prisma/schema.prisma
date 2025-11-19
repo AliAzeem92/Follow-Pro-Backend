@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  name             String?
+  email            String    @unique
+  password         String
+  role             Role      @default(USER)
+  skills           String[]  @default([])
+  verified         Boolean   @default(false)
+  profileCompleted Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  adminProjects    Project[] @relation("AdminProjects")
+  assignedTasks    Task[]    @relation("AssignedTasks")
+  otpTokens        OTPToken[]
+  
+  @@map("users")
+}
+
+model Project {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  adminId     String   @db.ObjectId
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  admin       User     @relation("AdminProjects", fields: [adminId], references: [id])
+  tasks       Task[]
+  
+  @@map("projects")
+}
+
+model Task {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  projectId   String     @db.ObjectId
+  title       String
+  description String?
+  assignedTo  String?    @db.ObjectId
+  status      TaskStatus @default(TODO)
+  category    String?
+  deadline    DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee    User?      @relation("AssignedTasks", fields: [assignedTo], references: [id])
+  
+  @@map("tasks")
+}
+
+model OTPToken {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String    @db.ObjectId
+  otp       String
+  expiresAt DateTime
+  type      OTPType
+  createdAt DateTime  @default(now())
+  
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("otp_tokens")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETE
+}
+
+enum OTPType {
+  VERIFICATION
+  PASSWORD_RESET
+}
+
+model Category {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("categories")
+}
+
+model Skill {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  category   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  @@map("skills")
+}
