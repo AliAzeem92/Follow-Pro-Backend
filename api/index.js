@@ -28,24 +28,25 @@ app.get('/', (req, res) => {
   });
 });
 
-// Import and use routes only if they exist
-try {
-  const authRoutes = require('../src/routes/auth');
-  const userRoutes = require('../src/routes/users');
-  const projectRoutes = require('../src/routes/projects');
-  const taskRoutes = require('../src/routes/tasks');
-  const skillRoutes = require('../src/routes/skills');
-  const categoryRoutes = require('../src/routes/categories');
+// Test route to verify API is working
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'API is working!' });
+});
 
-  app.use('/api/auth', authRoutes);
-  app.use('/api/users', userRoutes);
-  app.use('/api/projects', projectRoutes);
-  app.use('/api/tasks', taskRoutes);
-  app.use('/api/admin/skills', skillRoutes);
-  app.use('/api/admin/categories', categoryRoutes);
-} catch (error) {
-  console.error('Error loading routes:', error.message);
-}
+// Import and use routes
+const authRoutes = require('../src/routes/auth');
+const userRoutes = require('../src/routes/users');
+const projectRoutes = require('../src/routes/projects');
+const taskRoutes = require('../src/routes/tasks');
+const skillRoutes = require('../src/routes/skills');
+const categoryRoutes = require('../src/routes/categories');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/admin/skills', skillRoutes);
+app.use('/api/admin/categories', categoryRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {
