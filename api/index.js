@@ -65,10 +65,22 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ error: 'Please verify your email first' });
     }
     
-    // Simple token for now
+    // Generate real JWT tokens
+    const jwt = require('jsonwebtoken');
+    const accessToken = jwt.sign(
+      { userId: user.id }, 
+      process.env.JWT_SECRET || 'fallback-secret', 
+      { expiresIn: '1h' }
+    );
+    const refreshToken = jwt.sign(
+      { userId: user.id }, 
+      process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret', 
+      { expiresIn: '7d' }
+    );
+    
     res.json({
-      accessToken: 'real-token-' + user.id,
-      refreshToken: 'real-refresh-' + user.id,
+      accessToken,
+      refreshToken,
       user: {
         id: user.id,
         name: user.name,
