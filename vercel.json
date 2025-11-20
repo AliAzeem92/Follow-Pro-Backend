@@ -3,10 +3,7 @@
   "builds": [
     {
       "src": "api/index.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["prisma/**"]
-      }
+      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -14,9 +11,5 @@
       "src": "/(.*)",
       "dest": "/api/index.js"
     }
-  ],
-  "installCommand": "npm install && npx prisma generate",
-  "env": {
-    "PRISMA_CLI_BINARY_TARGETS": "rhel-openssl-1.0.x"
-  }
+  ]
 }
