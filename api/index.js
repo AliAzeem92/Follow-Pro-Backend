@@ -28,25 +28,43 @@ app.get('/', (req, res) => {
   });
 });
 
-// Test route to verify API is working
+// Test route
 app.get('/api/test', (req, res) => {
   res.json({ message: 'API is working!' });
 });
 
-// Import and use routes
-const authRoutes = require('../src/routes/auth');
-const userRoutes = require('../src/routes/users');
-const projectRoutes = require('../src/routes/projects');
-const taskRoutes = require('../src/routes/tasks');
-const skillRoutes = require('../src/routes/skills');
-const categoryRoutes = require('../src/routes/categories');
+// Try to import routes with fallback
+try {
+  const authRoutes = require('../src/routes/auth');
+  app.use('/api/auth', authRoutes);
+  console.log('Auth routes loaded successfully');
+} catch (error) {
+  console.error('Failed to load auth routes:', error.message);
+  // Fallback auth routes
+  app.post('/api/auth/login', (req, res) => {
+    res.status(503).json({ error: 'Auth service temporarily unavailable' });
+  });
+  app.post('/api/auth/register', (req, res) => {
+    res.status(503).json({ error: 'Auth service temporarily unavailable' });
+  });
+}
 
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/tasks', taskRoutes);
-app.use('/api/admin/skills', skillRoutes);
-app.use('/api/admin/categories', categoryRoutes);
+try {
+  const userRoutes = require('../src/routes/users');
+  const projectRoutes = require('../src/routes/projects');
+  const taskRoutes = require('../src/routes/tasks');
+  const skillRoutes = require('../src/routes/skills');
+  const categoryRoutes = require('../src/routes/categories');
+
+  app.use('/api/users', userRoutes);
+  app.use('/api/projects', projectRoutes);
+  app.use('/api/tasks', taskRoutes);
+  app.use('/api/admin/skills', skillRoutes);
+  app.use('/api/admin/categories', categoryRoutes);
+  console.log('All routes loaded successfully');
+} catch (error) {
+  console.error('Failed to load some routes:', error.message);
+}
 
 // Error handler
 app.use((err, req, res, next) => {
