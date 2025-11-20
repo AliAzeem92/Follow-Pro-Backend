@@ -33,41 +33,92 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'API is working!' });
 });
 
-// Try to import routes with fallback
-try {
-  const authRoutes = require('../src/routes/auth');
-  app.use('/api/auth', authRoutes);
-  console.log('Auth routes loaded successfully');
-} catch (error) {
-  console.error('Failed to load auth routes:', error.message);
-  
-  // Working fallback auth routes
-  app.post('/api/auth/login', (req, res) => {
+// Database test route
+app.get('/api/db-test', async (req, res) => {
+  try {
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    await prisma.$connect();
+    const userCount = await prisma.user.count();
+    await prisma.$disconnect();
+    res.json({ status: 'Database connected', userCount });
+  } catch (error) {
+    res.status(500).json({ error: 'Database error: ' + error.message });
+  }
+});
+
+// Real auth routes with database
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const bcrypt = require('bcryptjs');
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    
     const { email, password } = req.body;
     
-    // Simple test login
-    if (email === 'test@test.com' && password === 'test123') {
-      res.json({
-        accessToken: 'test-token',
-        refreshToken: 'test-refresh',
-        user: {
-          id: '1',
-          name: 'Test User',
-          email: 'test@test.com',
-          role: 'USER',
-          verified: true,
-          profileCompleted: true
-        }
-      });
-    } else {
-      res.status(400).json({ error: 'Use test@test.com / test123 for now' });
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user || !await bcrypt.compare(password, user.password)) {
+      return res.status(400).json({ error: 'Invalid credentials' });
     }
-  });
-  
-  app.post('/api/auth/register', (req, res) => {
-    res.json({ message: 'Registration temporarily disabled. Use test@test.com / test123 to login' });
-  });
-}
+    
+    if (!user.verified) {
+      return res.status(400).json({ error: 'Please verify your email first' });
+    }
+    
+    // Simple token for now
+    res.json({
+      accessToken: 'real-token-' + user.id,
+      refreshToken: 'real-refresh-' + user.id,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        skills: user.skills,
+        verified: user.verified,
+        profileCompleted: user.profileCompleted
+      }
+    });
+    
+    await prisma.$disconnect();
+  } catch (error) {
+    res.status(500).json({ error: 'Login error: ' + error.message });
+  }
+});
+
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const bcrypt = require('bcryptjs');
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    
+    const { email, password } = req.body;
+    
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+    
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const user = await prisma.user.create({
+      data: { 
+        email, 
+        password: hashedPassword, 
+        role: 'USER',
+        verified: true // Skip email verification for now
+      }
+    });
+    
+    res.status(201).json({ 
+      message: 'User registered successfully',
+      userId: user.id 
+    });
+    
+    await prisma.$disconnect();
+  } catch (error) {
+    res.status(500).json({ error: 'Registration error: ' + error.message });
+  }
+});
 
 try {
   const userRoutes = require('../src/routes/users');
