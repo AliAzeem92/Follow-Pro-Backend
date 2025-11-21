@@ -73,7 +73,12 @@ const authRoutes = (app) => {
         return res.status(400).json({ error: 'Invalid credentials' });
       }
       if (!user.verified) {
-        return res.status(400).json({ error: 'Please verify your email first' });
+        return res.status(200).json({ 
+          needsVerification: true,
+          userId: user.id,
+          email: user.email,
+          message: 'Please verify your email first' 
+        });
       }
       const accessToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: '1h' });
       const refreshToken = jwt.sign({ userId: user.id }, process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret', { expiresIn: '7d' });
