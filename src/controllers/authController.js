@@ -88,7 +88,12 @@ const login = async (req, res) => {
     }
 
     if (!user.verified) {
-      return res.status(400).json({ error: 'Please verify your email first' });
+      return res.status(200).json({ 
+        needsVerification: true,
+        userId: user.id,
+        email: user.email,
+        message: 'Please verify your email first' 
+      });
     }
 
     const { accessToken, refreshToken } = generateTokens(user.id);
