@@ -101,7 +101,7 @@ const authRoutes = (app) => {
       if (existingUser) return res.status(400).json({ error: 'User already exists' });
       const hashedPassword = await bcrypt.hash(password, 12);
       const user = await prisma.user.create({
-        data: { email, password: hashedPassword, role: 'USER', verified: false }
+        data: { email, password: hashedPassword, role: 'USER', verified: false, profileCompleted: false }
       });
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       await prisma.oTPToken.create({
