@@ -12,5 +12,11 @@
       "dest": "/api/index.js"
     }
   ],
-  "buildCommand": "npx prisma generate"
+  "buildCommand": "npx prisma generate",
+  "crons": [
+    {
+      "path": "/api/cron/ping-db",
+      "schedule": "0 12 * * 1"
+    }
+  ]
 }
